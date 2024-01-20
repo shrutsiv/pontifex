@@ -7,7 +7,7 @@ data Card = Card Int | JokerA | JokerB deriving (Show, Eq)
 type Deck = [Card]
 
 -- should shuffle this at some point
-initial = map Card [1 .. 52] ++ [JokerA] ++ [JokerB]
+initial = map Card [1 .. 52] <> [JokerA, JokerB]
 
 -- preserve the invariant that jokers don't end up first
 rotate n xs = take (length xs) (drop n (cycle xs))
