@@ -1,8 +1,8 @@
-import Data.Char (chr, ord)
+import Data.Char (chr, ord, toUpper)
 import Data.List (elemIndex, splitAt)
 import Data.Maybe (fromJust)
 
-data Card = Card Int | JokerA | JokerB deriving (Show, Eq)
+data Card = Card Int | JokerA | JokerB deriving (Eq)
 
 type Deck = [Card]
 
@@ -10,7 +10,7 @@ type Deck = [Card]
 initial = map Card [1 .. 52] <> [JokerA, JokerB]
 
 -- preserve the invariant that jokers don't end up first
-rotate n xs = take (length xs) (drop n (cycle xs))
+rotate n xs = take (length xs) . drop n . cycle $ xs
 
 swapAt n xs = let (ys, a : b : zs) = splitAt n xs in ys ++ b : a : zs
 
@@ -29,12 +29,13 @@ tripleCut deck =
       (midCut, btmCut) = splitAt (max ind1 ind2 + 1) rest
    in btmCut ++ midCut ++ topCut
 
+toInt :: Card -> Int
 toInt (Card x) = x
 toInt _ = 53
 
 countCut :: Deck -> Deck
 countCut deck =
-  let (topCut, restCut) = splitAt (toInt . last $ deck) (init deck)
+  let (topCut, restCut) = splitAt (toInt . last $ deck) . init $ deck
    in restCut ++ topCut ++ [last deck]
 
 -- <3
@@ -47,10 +48,11 @@ key deck
   | k `elem` [JokerA, JokerB] = key . keystreamDeck $ deck
   | otherwise = toInt k
   where
-    k = deck !! toInt (head deck)
+    -- deck at the index specified by the intified head of the deck
+    k = (!!) deck . toInt . head $ deck
 
 keyStream :: String -> [Int]
-keyStream = map key . scanl (const . keystreamDeck) initial . tail
+keyStream = tail . map key . scanl (const . keystreamDeck) initial
 
 -- CHARACTER TO NUMBER CONVERSIONS
 
@@ -65,14 +67,20 @@ shiftMod x n = (n - 1) `mod` x + 1 -- handling negatives
 
 toChar = chr . add shamt . shiftMod 26
 
--- ENCRYPTION (p straightforward)
+-- ENCRYPTION/DECRYPTION (p straightforward)
+encryptChar k = toChar . add k . toNum
+
+decryptChar k = toChar . subtract k . toNum
+
 encrypt :: String -> String
-encrypt input = zipWith (\k i -> toChar (toNum i + k)) (keyStream input) input
+encrypt input = zipWith encryptChar (keyStream input') input'
+  where
+    input' = map toUpper input
 
 decrypt :: [Int] -> String -> String
-decrypt = zipWith (\k i -> toChar (toNum i - k))
+decrypt = zipWith decryptChar
 
 main = do
   putStrLn $ encrypt "SHRUTIISCOOL"
   print $ keyStream "SHRUTIISCOOL"
-  print $ decrypt [2, 49, 51, 14, 50, 24, 9, 15, 34, 14, 50, 14] "UEQIRGRHKCMZ"
+  print $ decrypt (keyStream "SHRUTIISCOOL") . encrypt $ "SHRUTIISCOOL"
