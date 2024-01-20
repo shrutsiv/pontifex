@@ -52,7 +52,7 @@ key deck
     k = (!!) deck . toInt . head $ deck
 
 keyStream :: String -> [Int]
-keyStream = tail . map key . scanl (const . keystreamDeck) initial
+keyStream = map key . tail . scanl (const . keystreamDeck) initial
 
 -- CHARACTER TO NUMBER CONVERSIONS
 
